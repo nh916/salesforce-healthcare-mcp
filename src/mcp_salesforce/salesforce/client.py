@@ -122,7 +122,8 @@ class SalesforceClient:
         json: dict[str, Any] | None = None,
         retry_on_invalid_session: bool = True,
     ) -> httpx.Response:
-        """Make an authenticated Salesforce REST request.
+        """
+        Make an authenticated Salesforce REST request.
 
         Args:
             method: HTTP method (GET, POST, PATCH, DELETE).
