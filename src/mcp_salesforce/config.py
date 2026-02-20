@@ -1,5 +1,5 @@
 """
-This file is reading the env vars from the `.env` file 
+This file is reading the env vars from the `.env` file
 and converting them to nice variables for us to easily use within our code
 """
 
