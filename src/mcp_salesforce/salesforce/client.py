@@ -75,7 +75,7 @@ class SalesforceClient:
         self._token_url = "https://login.salesforce.com/services/oauth2/token"
         self._timeout = httpx.Timeout(30)  # 30 seconds
 
-        self._http = httpx.Client(timeout=self._timeout)
+        self._httpx_client = httpx.Client(timeout=self._timeout)
         self._token: SalesforceToken | None = None
 
     def _refresh_access_token(self) -> str:
@@ -94,7 +94,7 @@ class SalesforceClient:
             "refresh_token": settings.SALESFORCE_REFRESH_TOKEN,
         }
 
-        response: httpx.Response = self._http.post(self._token_url, data=data)
+        response: httpx.Response = self._httpx_client.post(self._token_url, data=data)
 
         if response.status_code >= 400:
             raise SalesforceAuthError(
@@ -142,31 +142,40 @@ class SalesforceClient:
         if self._access_token is None:
             self._refresh_access_token()
 
-        headers = {
-            "Authorization": f"Bearer {self.get_access_token()}",
+        token: str = self._access_token
+
+        if token is None:
+            raise SalesforceAuthError("Access token is missing after refresh.")
+
+        headers: dict[str, str] = {
+            "Authorization": f"Bearer {token}",
             "Accept": "application/json",
         }
+
         if method.upper() in {"POST", "PATCH"}:
             headers["Content-Type"] = "application/json"
 
-        resp = self._http.request(
-            method, url, params=params, json=json, headers=headers
+        response: httpx.Response = self._httpx_client.request(
+            method=method, url=url, params=params, json=json, headers=headers
         )
 
         # Common SF invalid-session shape:
         # [{"message":"Session expired or invalid","errorCode":"INVALID_SESSION_ID"}]
         if (
             retry_on_invalid_session
-            and resp.status_code == 401
-            and "INVALID_SESSION_ID" in resp.text
+            and response.status_code == 401
+            and "INVALID_SESSION_ID" in response.text
         ):
             self._refresh_access_token()
-            headers["Authorization"] = f"Bearer {self.get_access_token()}"
-            resp = self._http.request(
-                method, url, params=params, json=json, headers=headers
+            headers: dict[str, str] = {
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/json",
+            }
+            response: httpx.Response = self._httpx_client.request(
+                method=method, url=url, params=params, json=json, headers=headers
             )
 
-        return resp
+        return response
 
     def _raise_for_status(self, resp: httpx.Response) -> None:
         """Raise a helpful error if the response indicates failure."""
