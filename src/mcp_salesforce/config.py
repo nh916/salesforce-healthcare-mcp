@@ -30,4 +30,7 @@ class Settings(BaseSettings):
     SALESFORCE_API_VERSION: str = "v60.0"
 
 
-settings: Settings = Settings()
+# Pydantic `BaseSettings` loads required fields from environment variables at runtime.
+# Mypy cannot detect this dynamic loading and incorrectly expects constructor args.
+# We intentionally ignore the `call-arg` error here.
+settings: Settings = Settings()  # type: ignore[call-arg]
