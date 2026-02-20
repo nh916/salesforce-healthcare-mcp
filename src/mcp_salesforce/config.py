@@ -31,20 +31,3 @@ class Settings(BaseSettings):
 
 
 settings: Settings = Settings()
-
-
-def main() -> None:
-    """Entry point for validating environment configuration.
-
-    Prints loaded Salesforce configuration values.
-    """
-    print("Salesforce Config Loaded:")
-    print(f"SF_CLIENT_ID: {settings.SALESFORCE_CLIENT_ID}")
-    print(f"SF_CLIENT_SECRET: {'*' * 8}")  # don't print secrets
-    print(f"SF_REFRESH_TOKEN: {'*' * 8}")
-    print(f"SF_INSTANCE_URL: {settings.SALESFORCE_INSTANCE_URL}")
-    print(f"SF_API_VERSION: {settings.SALESFORCE_API_VERSION}")
-
-
-if __name__ == "__main__":
-    main()
