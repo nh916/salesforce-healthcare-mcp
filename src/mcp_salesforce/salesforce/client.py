@@ -13,11 +13,9 @@ from mcp_salesforce.config import settings
 
 
 class SalesforceAuthError(RuntimeError):
-    """Raised when Salesforce OAuth authentication fails."""
-
-
-class SalesforceAPIError(RuntimeError):
-    """Raised when a Salesforce API request fails."""
+    """
+    Raised when Salesforce OAuth authentication fails
+    """
 
 
 # TODO: use a pydantic class here instead
@@ -115,7 +113,7 @@ class SalesforceClient:
         return token
 
     def _make_request(
-        self,
+        self: Self,
         method: str,
         path: str,
         params: dict[str, Any] | None = None,
@@ -168,30 +166,24 @@ class SalesforceClient:
             and "INVALID_SESSION_ID" in response.text
         ):
             self._refresh_access_token()
-            headers: dict[str, str] = {
+            headers = {
                 "Authorization": f"Bearer {token}",
                 "Accept": "application/json",
             }
-            response: httpx.Response = self._httpx_client.request(
+            response = self._httpx_client.request(
                 method=method, url=url, params=params, json=json, headers=headers
             )
 
         return response
 
-    def _raise_for_status(self, resp: httpx.Response) -> None:
-        """Raise a helpful error if the response indicates failure."""
-        if 200 <= resp.status_code < 300 or resp.status_code == 204:
-            return
-        raise SalesforceAPIError(
-            f"Salesforce API error ({resp.status_code}): {resp.text}"
-        )
-
     # -------------------------
     # Contacts (sObject: Contact)
     # -------------------------
 
-    def create_contact(self, fields: dict[str, Any]) -> str:
-        """Create a Contact.
+    # TODO: the fields need to be a pydantic model instead
+    def create_contact(self: Self, fields: dict[str, Any]) -> str:
+        """
+        Create a Contact.
 
         Args:
             fields: Contact fields in Salesforce API format (e.g., FirstName, LastName, Email).
@@ -199,27 +191,51 @@ class SalesforceClient:
         Returns:
             str: The created Contact Id.
         """
-        resp = self._request("POST", "/sobjects/Contact", json=fields)
-        self._raise_for_status(resp)
-        return str(resp.json()["id"])
+        # TODO: use the HTTP Method enums that we have handy
+        response: httpx.Response = self._make_request(
+            method="POST", path="/sobjects/Contact", json=fields
+        )
+        response.raise_for_status()
+        return str(response.json()["id"])
 
-    def get_contact(self, contact_id: str) -> dict[str, Any]:
-        """Fetch a Contact by Id."""
-        resp = self._request("GET", f"/sobjects/Contact/{contact_id}")
-        self._raise_for_status(resp)
-        return dict(resp.json())
+    # TODO: return a pydantic model instead
+    def get_contact(self: Self, contact_id: str) -> dict[str, Any]:
+        """
+        Fetch a Contact by Id
 
-    def update_contact(self, contact_id: str, fields: dict[str, Any]) -> None:
-        """Update a Contact by Id."""
-        resp = self._request("PATCH", f"/sobjects/Contact/{contact_id}", json=fields)
-        self._raise_for_status(resp)
+        Args:
+            contact_id (str): contact_id within salesforce to find the contact
 
-    def delete_contact(self, contact_id: str) -> None:
-        """Delete a Contact by Id."""
-        resp = self._request("DELETE", f"/sobjects/Contact/{contact_id}")
-        self._raise_for_status(resp)
+        Returns:
 
-    def query(self, soql: str) -> dict[str, Any]:
+        """
+
+        response: httpx.Response = self._make_request(
+            method="GET", path="/sobjects/Contact/{contact_id}"
+        )
+        response.raise_for_status()
+        return dict(response.json())
+
+    def update_contact(self: Self, contact_id: str, fields: dict[str, Any]) -> None:
+        """
+        Update a Contact by Id
+        """
+
+        response: httpx.Response = self._make_request(
+            method="PATCH", path="/sobjects/Contact/{contact_id}", json=fields
+        )
+        response.raise_for_status()
+
+    def delete_contact(self: Self, contact_id: str) -> None:
+        """
+        Delete a Contact by Id
+        """
+        response: httpx.Response = self._make_request(
+            method="DELETE", path="/sobjects/Contact/{contact_id}"
+        )
+        response.raise_for_status()
+
+    def query(self: Self, soql: str) -> dict[str, Any]:
         """Run a SOQL query via /query.
 
         Args:
@@ -228,11 +244,13 @@ class SalesforceClient:
         Returns:
             Dict[str, Any]: Salesforce query response JSON.
         """
-        resp = self._request("GET", "/query", params={"q": soql})
-        self._raise_for_status(resp)
-        return dict(resp.json())
+        response: httpx.Response = self._make_request(
+            method="GET", path="/query", params={"q": soql}
+        )
+        response.raise_for_status()
+        return dict(response.json())
 
-    def list_contacts(self, limit: int = 10) -> dict[str, Any]:
+    def list_contacts(self: Self, limit: int = 10) -> dict[str, Any]:
         """List recent Contacts (simple convenience wrapper)."""
         soql = (
             "SELECT Id, FirstName, LastName, Phone, Email "
@@ -245,31 +263,49 @@ class SalesforceClient:
     # Appointments (sObject: Event)
     # -------------------------
 
-    def create_appointment(self, fields: dict[str, Any]) -> str:
-        """Create an appointment (Event)."""
-        resp = self._request("POST", "/sobjects/Event", json=fields)
-        self._raise_for_status(resp)
-        return str(resp.json()["id"])
+    def create_appointment(self: Self, fields: dict[str, Any]) -> str:
+        """
+        Create an appointment (Event)
+        """
+        response: httpx.Response = self._make_request(
+            method="POST", path="/sobjects/Event", json=fields
+        )
+        response.raise_for_status()
+        return str(response.json()["id"])
 
-    def get_appointment(self, event_id: str) -> dict[str, Any]:
-        """Fetch an appointment (Event) by Id."""
-        resp = self._request("GET", f"/sobjects/Event/{event_id}")
-        self._raise_for_status(resp)
-        return dict(resp.json())
+    def get_appointment(self: Self, event_id: str) -> dict[str, Any]:
+        """
+        Fetch an appointment (Event) by Id
+        """
+        response: httpx.Response = self._make_request(
+            method="GET", path=f"/sobjects/Event/{event_id}"
+        )
+        response.raise_for_status()
+        return dict(response.json())
 
-    def update_appointment(self, event_id: str, fields: dict[str, Any]) -> None:
-        """Update an appointment (Event) by Id."""
-        resp = self._request("PATCH", f"/sobjects/Event/{event_id}", json=fields)
-        self._raise_for_status(resp)
+    def update_appointment(self: Self, event_id: str, fields: dict[str, Any]) -> None:
+        """
+        Update an appointment (Event) by Id
+        """
+        response: httpx.Response = self._make_request(
+            method="PATCH", path=f"/sobjects/Event/{event_id}", json=fields
+        )
+        response.raise_for_status()
 
-    def delete_appointment(self, event_id: str) -> None:
-        """Delete an appointment (Event) by Id."""
-        resp = self._request("DELETE", f"/sobjects/Event/{event_id}")
-        self._raise_for_status(resp)
+    def delete_appointment(self: Self, event_id: str) -> None:
+        """
+        Delete an appointment (Event) by Id
+        """
+        response: httpx.Response = self._make_request(
+            method="DELETE", path=f"/sobjects/Event/{event_id}"
+        )
+        response.raise_for_status()
 
-    def list_appointments(self, limit: int = 10) -> dict[str, Any]:
-        """List recent appointments (Events)."""
-        soql = (
+    def list_appointments(self: Self, limit: int = 10) -> dict[str, Any]:
+        """
+        List recent appointments (Events)
+        """
+        soql: str = (
             "SELECT Id, Subject, StartDateTime, EndDateTime, WhoId "
             "FROM Event ORDER BY StartDateTime DESC "
             f"LIMIT {int(limit)}"
