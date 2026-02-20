@@ -1,4 +1,4 @@
-name: Mypy Static Typechecker
+name: Typechecker
 
 on:
   pull_request:
