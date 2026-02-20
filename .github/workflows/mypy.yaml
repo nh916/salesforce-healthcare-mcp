@@ -10,8 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
+
         with:
           python-version: "3.12"
           cache: "pip"
@@ -19,8 +19,8 @@ jobs:
       - name: Install Poetry
         run: pipx install poetry
 
-      - name: Install deps
-        run: poetry install --with dev
+      - name: Install dependencies
+        run: poetry install --with dev --no-root
 
       - name: mypy
         run: poetry run mypy src
