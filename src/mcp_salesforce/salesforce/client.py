@@ -70,6 +70,7 @@ class SalesforceClient:
         self._refresh_token = settings.SALESFORCE_REFRESH_TOKEN
         self._instance_url = settings.SALESFORCE_INSTANCE_URL.rstrip("/")
         self._api_version = settings.SALESFORCE_API_VERSION
+        self._api_base_url = f"{self._instance_url}/services/data/{self._api_version}"
 
         self._token_url = "https://login.salesforce.com/services/oauth2/token"
         self._timeout = httpx.Timeout(30)  # 30 seconds
@@ -113,29 +114,10 @@ class SalesforceClient:
 
         return token
 
-    def get_access_token(self) -> str:
-        """Get a valid access token, refreshing if necessary.
-
-        Returns:
-            str: The access token suitable for Authorization: Bearer ...
-
-        Raises:
-            SalesforceAuthError: If we cannot refresh the token.
-        """
-        if not self._is_token_valid():
-            self._refresh_access_token()
-        assert self._token is not None
-        return self._token.access_token
-
-    def _api_base(self) -> str:
-        """Return the REST API base URL for this org."""
-        return f"{self._instance_url}/services/data/{self._api_version}"
-
-    def _request(
+    def _make_request(
         self,
         method: str,
         path: str,
-        *,
         params: dict[str, Any] | None = None,
         json: dict[str, Any] | None = None,
         retry_on_invalid_session: bool = True,
@@ -155,7 +137,11 @@ class SalesforceClient:
         Raises:
             SalesforceAPIError: For non-success responses (after retry behavior).
         """
-        url = f"{self._api_base()}{path}"
+        url: str = f"{self._api_base_url}/{path}"
+
+        if self._access_token is None:
+            self._refresh_access_token()
+
         headers = {
             "Authorization": f"Bearer {self.get_access_token()}",
             "Accept": "application/json",
