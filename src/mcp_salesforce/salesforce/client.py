@@ -20,6 +20,7 @@ class SalesforceAPIError(RuntimeError):
     """Raised when a Salesforce API request fails."""
 
 
+# TODO: use a pydantic class here instead
 @dataclass(frozen=True)
 class SalesforceToken:
     """OAuth token state returned by Salesforce.
