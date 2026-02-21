@@ -50,7 +50,7 @@ class SalesforceClient:
         self._timeout = httpx.Timeout(30)  # 30 seconds
 
         self._httpx_client = httpx.Client(timeout=self._timeout)
-        self._access_token = None
+        self._access_token = ""
 
     def _refresh_access_token(self) -> str:
         """
@@ -396,7 +396,7 @@ def main() -> None:
     # )
     # print("Created Contact:", contact_id)
 
-    contact_id: str = "003g5000009SB09AAG"
+    # contact_id: str = "003g5000009SB09AAG"
 
     # get contact by id
     # contact = client.get_contact(contact_id=contact_id)
