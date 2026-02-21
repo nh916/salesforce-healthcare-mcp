@@ -8,6 +8,7 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 
+# ----------------------------------------------------------- request models -----------------------------------------------------------
 class ContactRequest(BaseModel):
     """
     Request body for creating a Salesforce Contact.
