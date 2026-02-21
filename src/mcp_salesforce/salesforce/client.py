@@ -11,6 +11,7 @@ import httpx
 from mcp_salesforce.config import settings
 
 
+# TODO: do I even need this?
 class SalesforceAuthError(RuntimeError):
     """
     Raised when Salesforce OAuth authentication fails
@@ -26,11 +27,6 @@ class SalesforceClient:
       - Mints short-lived access tokens via the OAuth token endpoint
       - Caches the current access token in memory
       - Retries once on INVALID_SESSION_ID by refreshing and re-sending the request
-
-    Typical usage:
-        client = SalesforceClient(...)
-        contact_id = client.create_contact({...})
-        contacts = client.list_contacts(limit=10)
     """
 
     def __init__(self: Self) -> None:
@@ -223,7 +219,7 @@ class SalesforceClient:
         """
 
         response: httpx.Response = self._make_request(
-            method="PATCH", path="/sobjects/Contact/{contact_id}", json=fields
+            method="PATCH", path=f"/sobjects/Contact/{contact_id}", json=fields
         )
         response.raise_for_status()
 
@@ -238,7 +234,7 @@ class SalesforceClient:
             None
         """
         response: httpx.Response = self._make_request(
-            method="DELETE", path="/sobjects/Contact/{contact_id}"
+            method="DELETE", path=f"/sobjects/Contact/{contact_id}"
         )
         response.raise_for_status()
 
@@ -372,9 +368,8 @@ def main() -> None:
 
     Toggle sections by commenting/uncommenting the blocks below.
     """
-    import json as _json
 
-    client = SalesforceClient()
+    SalesforceClient()
 
     # ----------------------------
     # 0) Token refresh only
@@ -401,10 +396,13 @@ def main() -> None:
     # )
     # print("Created Contact:", contact_id)
 
-    contact = client.get_contact(contact_id="003g5000009SB09AAG")
-    print("Fetched Contact:", _json.dumps(contact, indent=2))
+    contact_id: str = "003g5000009SB09AAG"
 
-    # client.update_contact(contact_id, {"Phone": "555-000-0000"})
+    # get contact by id
+    # contact = client.get_contact(contact_id=contact_id)
+    # print("Fetched Contact:", _json.dumps(contact, indent=2))
+
+    # client.update_contact(contact_id=contact_id, fields={"Phone": "555-000-0000"})
     # print("Updated Contact phone.")
 
     # client.delete_contact(contact_id)
@@ -427,10 +425,10 @@ def main() -> None:
     # 5) Create -> Get -> Update -> Delete appointment (Event)
     # NOTE: WhoId should be a valid Contact/Lead Id if you want it linked.
     # ----------------------------
+
     # now = datetime.now(timezone.utc).replace(microsecond=0)
     # start = now + timedelta(minutes=10)
     # end = start + timedelta(minutes=30)
-    #
     # event_id = client.create_appointment(
     #     {
     #         "Subject": "Temp Smoke Test Event",
@@ -440,13 +438,13 @@ def main() -> None:
     #     }
     # )
     # print("Created Event:", event_id)
-    #
+
     # event = client.get_appointment(event_id)
     # print("Fetched Event:", _json.dumps(event, indent=2))
-    #
+
     # client.update_appointment(event_id, {"Subject": "Temp Smoke Test Event (Updated)"})
     # print("Updated Event subject.")
-    #
+
     # client.delete_appointment(event_id)
     # print("Deleted Event.")
 
