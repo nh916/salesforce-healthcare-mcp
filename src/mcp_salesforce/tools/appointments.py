@@ -146,7 +146,7 @@ def salesforce_update_appointment(
     Returns:
         dict[str, str]: returns the status and the `event_id` that was updated
     """
-    salesforce_client.update_appointment(event_id=eval, data=data)
+    salesforce_client.update_appointment(event_id=event_id, data=data)
     return {
         "status": "success",
         "event_id": event_id,
