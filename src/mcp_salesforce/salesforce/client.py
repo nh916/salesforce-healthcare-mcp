@@ -78,7 +78,8 @@ class SalesforceClient:
         self._token: SalesforceToken | None = None
 
     def _refresh_access_token(self) -> str:
-        """Refresh and cache an access token using the refresh token.
+        """
+        Refresh and cache an access token using the refresh token.
 
         Returns:
             The new access token.
