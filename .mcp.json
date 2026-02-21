@@ -1,0 +1,8 @@
+{
+    "mcpServers": {
+      "salesforce": {
+        "command": "poetry",
+        "args": ["run", "python", "-m", "mcp_salesforce.server"]
+      }
+    }
+  }
