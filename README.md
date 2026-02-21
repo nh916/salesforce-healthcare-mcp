@@ -14,8 +14,6 @@ This project implements:
   * Contacts (`Contact`)
   * Appointments (`Event`)
 
----
-
 ## Architecture
 
 ```mermaid
@@ -33,7 +31,6 @@ flowchart TD
 * `tools/` — MCP tool wrappers
 * `server.py` — MCP server entrypoint
 
----
 
 ## Features
 
@@ -53,8 +50,6 @@ flowchart TD
 * Delete
 * List
 
----
-
 ## Setup
 
 ### 1. Install dependencies
@@ -62,8 +57,6 @@ flowchart TD
 ```bash
 poetry install
 ```
-
----
 
 ### 2. Configure environment variables
 
@@ -77,15 +70,11 @@ SALESFORCE_INSTANCE_URL=https://your-instance.salesforce.com
 SALESFORCE_API_VERSION=v60.0
 ```
 
----
-
 ## Running the MCP Server
 
 ```bash
 poetry run python -m mcp_salesforce.server
 ```
-
----
 
 ## Connecting to Claude Code
 
@@ -111,7 +100,6 @@ Example prompt:
 
 > Use salesforce_list_contacts with limit 3
 
----
 
 ## Authentication Strategy
 
@@ -125,8 +113,6 @@ Example prompt:
 
 No manual re-authentication required once refresh token is configured.
 
----
-
 ## Design Decisions
 
 * Single shared `SalesforceClient`
@@ -134,8 +120,6 @@ No manual re-authentication required once refresh token is configured.
 * Retry-once logic for expired sessions
 * Pydantic validation at tool boundary
 * Strict Python 3.11 typing (`dict`, `| None`, etc.)
-
----
 
 ## Example Tool Usage
 
@@ -160,8 +144,6 @@ Create Appointment:
   "WhoId": "003XXXXXXXXXXXX"
 }
 ```
-
----
 
 ## Future Improvements
 
