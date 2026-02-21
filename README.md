@@ -20,7 +20,7 @@ This project implements:
 
 ```mermaid
 flowchart TD
-    A[Claude / LLM] --> B[MCP Server (FastMCP)]
+    A[Claude / LLM] --> B[MCP Server - FastMCP]
     B --> C[SalesforceClient]
     C --> D[Salesforce REST API]
 ```
