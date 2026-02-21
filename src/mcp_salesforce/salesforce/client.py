@@ -2,8 +2,6 @@
 A client to interact with Salesforce API
 """
 
-from __future__ import annotations
-
 from typing import Any, Self
 
 import httpx
