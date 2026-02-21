@@ -39,7 +39,8 @@ class SalesforceToken:
 
 
 class SalesforceClient:
-    """Salesforce REST client using OAuth refresh-token flow.
+    """
+    Salesforce REST client using OAuth refresh-token flow.
 
     This client:
       - Stores long-lived refresh token from config
