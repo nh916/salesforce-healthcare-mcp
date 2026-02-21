@@ -7,6 +7,10 @@ typos or any small issues
 from enum import StrEnum
 
 
+# TODO: consider using thie for the methods within the `Salesforce` client later on
+#  to the code to make the code stronger
+#  need automated testing and more testing to be sure the code works correctly with the enums
+#  that I don't want to do right now
 class HttpMethod(StrEnum):
     """
     HTTP methods supported by the Salesforce client
