@@ -4,7 +4,6 @@ A client to interact with Salesforce API
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Any, Self
 
 import httpx
@@ -16,26 +15,6 @@ class SalesforceAuthError(RuntimeError):
     """
     Raised when Salesforce OAuth authentication fails
     """
-
-
-# TODO: use a pydantic class here instead
-@dataclass(frozen=True)
-class SalesforceToken:
-    """OAuth token state returned by Salesforce.
-
-    Attributes:
-        access_token: Bearer token used for Salesforce API calls.
-        instance_url: Base instance URL for the org (e.g., https://xxx.my.salesforce.com).
-        issued_at_ms: Token issue time in epoch milliseconds (as returned by Salesforce).
-        token_type: Token type (typically "Bearer").
-        signature: Salesforce signature (returned by token endpoint; usually not needed).
-    """
-
-    access_token: str
-    instance_url: str
-    issued_at_ms: int
-    token_type: str
-    signature: str
 
 
 class SalesforceClient:
@@ -75,7 +54,7 @@ class SalesforceClient:
         self._timeout = httpx.Timeout(30)  # 30 seconds
 
         self._httpx_client = httpx.Client(timeout=self._timeout)
-        self._token: SalesforceToken | None = None
+        self._access_token = None
 
     def _refresh_access_token(self) -> str:
         """
@@ -142,13 +121,9 @@ class SalesforceClient:
         url: str = f"{self._api_base_url}/{path}"
 
         if self._access_token is None:
-            self._refresh_access_token()
-
-        token: str = self._access_token
-
-        # TODO: fix this from being unreachable?
-        if token is None:
-            raise SalesforceAuthError("Access token is missing after refresh.")
+            token = self._refresh_access_token()
+        else:
+            token = self._access_token
 
         headers: dict[str, str] = {
             "Authorization": f"Bearer {token}",
