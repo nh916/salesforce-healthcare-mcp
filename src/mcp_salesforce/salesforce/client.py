@@ -9,6 +9,12 @@ from typing import Any, Self
 import httpx
 
 from mcp_salesforce.config import settings
+from mcp_salesforce.salesforce.models import (
+    AppointmentRequest,
+    AppointmentUpdateRequest,
+    ContactRequest,
+    ContactUpdateRequest,
+)
 
 
 # TODO: do I even need this?
@@ -164,13 +170,12 @@ class SalesforceClient:
     # Contacts (sObject: Contact)
     # ----------------------------------------------------------------------------------------------------------
 
-    # TODO: the fields need to be a pydantic model instead
-    def create_contact(self: Self, fields: dict[str, Any]) -> str:
+    def create_contact(self: Self, data: ContactRequest) -> str:
         """
         Create a Contact.
 
         Args:
-            fields: Contact fields in Salesforce API format (e.g., FirstName, LastName, Email).
+            data (ContactRequest): Contact fields as a validated request model.
 
         Returns:
             str: The created Contact Id from Salesforce
@@ -178,14 +183,10 @@ class SalesforceClient:
         Raises:
             KeyError: in case the key is not in the dict and the JSON response comes back from the server different than expected
         """
-
-        # TODO: use the HTTP Method enums that we have handy
         response: httpx.Response = self._make_request(
-            method="POST", path="/sobjects/Contact", json=fields
+            method="POST", path="/sobjects/Contact", json=data.model_dump(mode="json")
         )
-
         response.raise_for_status()
-
         return str(response.json()["id"])
 
     # TODO: return a pydantic model instead
@@ -206,20 +207,21 @@ class SalesforceClient:
         response.raise_for_status()
         return response.json()
 
-    def update_contact(self: Self, contact_id: str, fields: dict[str, Any]) -> None:
+    def update_contact(self: Self, contact_id: str, data: ContactUpdateRequest) -> None:
         """
-        Update a Contact by Id
+        Update a Contact by Id.
 
         Args:
-            contact_id (str): the contact ID from Salesforce that we want to update
-            fields (dict[str, Any]): body to overwrite what was in Salesforce
+            contact_id: The contact ID from Salesforce to update.
+            data (ContactUpdateRequest): Fields to update (only set fields are sent).
 
         Returns:
             None
         """
-
         response: httpx.Response = self._make_request(
-            method="PATCH", path=f"/sobjects/Contact/{contact_id}", json=fields
+            method="PATCH",
+            path=f"/sobjects/Contact/{contact_id}",
+            json=data.model_dump(mode="json", exclude_none=True),
         )
         response.raise_for_status()
 
@@ -274,18 +276,18 @@ class SalesforceClient:
     # Appointments (sObject: Event)
     # ---------------------------------------------------------------------------------
 
-    def create_appointment(self: Self, fields: dict[str, Any]) -> str:
+    def create_appointment(self: Self, data: AppointmentRequest) -> str:
         """
-        Create an appointment (Event)
+        Create an appointment (Event).
 
         Args:
-            fields (dict[str, Any]): the body that we want to write to the `Events` table
+            data (AppointmentRequest): Event fields as a validated request model.
 
         Returns:
-            The created appointment ID
+            The created appointment ID.
         """
         response: httpx.Response = self._make_request(
-            method="POST", path="/sobjects/Event", json=fields
+            method="POST", path="/sobjects/Event", json=data.model_dump(mode="json")
         )
         response.raise_for_status()
         return response.json()["id"]
@@ -309,20 +311,23 @@ class SalesforceClient:
         response.raise_for_status()
         return dict(response.json())
 
-    def update_appointment(self: Self, event_id: str, fields: dict[str, Any]) -> None:
+    def update_appointment(
+        self: Self, event_id: str, data: AppointmentUpdateRequest
+    ) -> None:
         """
-        Update an appointment (Event) by Id
+        Update an appointment (Event) by Id.
 
         Args:
-            event_id (str): the ID of the appointment that we want to update
-            fields (dict[str, Any]): the body that we want to write to the `Events` table
+            event_id (str): The ID of the appointment to update.
+            data (AppointmentUpdateRequest): Fields to update (only set fields are sent).
 
         Returns:
             None
         """
-
         response: httpx.Response = self._make_request(
-            method="PATCH", path=f"/sobjects/Event/{event_id}", json=fields
+            method="PATCH",
+            path=f"/sobjects/Event/{event_id}",
+            json=data.model_dump(mode="json", exclude_none=True),
         )
         response.raise_for_status()
 
@@ -387,12 +392,12 @@ def main() -> None:
     # 2) Create -> Get -> Update -> Delete contact
     # ----------------------------
     # contact_id = client.create_contact(
-    #     {
-    #         "FirstName": f"John+{int(datetime.now().timestamp())}",
-    #         "LastName": f"Doe+{int(datetime.now().timestamp())}",
-    #         "Email": f"john.doe+{int(datetime.now().timestamp())}@example.com",
-    #         "Phone": "555-555-5556",
-    #     }
+    #     ContactRequest(
+    #         FirstName=f"John+{int(datetime.now().timestamp())}",
+    #         LastName=f"Doe+{int(datetime.now().timestamp())}",
+    #         Email=f"john.doe+{int(datetime.now().timestamp())}@example.com",
+    #         Phone="555-555-5556",
+    #     )
     # )
     # print("Created Contact:", contact_id)
 
@@ -402,7 +407,7 @@ def main() -> None:
     # contact = client.get_contact(contact_id=contact_id)
     # print("Fetched Contact:", _json.dumps(contact, indent=2))
 
-    # client.update_contact(contact_id=contact_id, fields={"Phone": "555-000-0000"})
+    # client.update_contact(contact_id=contact_id, data=ContactUpdateRequest(Phone="555-000-0000"))
     # print("Updated Contact phone.")
 
     # client.delete_contact(contact_id)
@@ -430,19 +435,19 @@ def main() -> None:
     # start = now + timedelta(minutes=10)
     # end = start + timedelta(minutes=30)
     # event_id = client.create_appointment(
-    #     {
-    #         "Subject": "Temp Smoke Test Event",
-    #         "StartDateTime": start.isoformat().replace("+00:00", "Z"),
-    #         "EndDateTime": end.isoformat().replace("+00:00", "Z"),
-    #         # "WhoId": "<CONTACT_OR_LEAD_ID>",
-    #     }
+    #     AppointmentRequest(
+    #         Subject="Temp Smoke Test Event",
+    #         StartDateTime=start.isoformat().replace("+00:00", "Z"),
+    #         EndDateTime=end.isoformat().replace("+00:00", "Z"),
+    #         WhoId=None,  # or a Contact/Lead ID
+    #     )
     # )
     # print("Created Event:", event_id)
 
     # event = client.get_appointment(event_id)
     # print("Fetched Event:", _json.dumps(event, indent=2))
 
-    # client.update_appointment(event_id, {"Subject": "Temp Smoke Test Event (Updated)"})
+    # client.update_appointment(event_id, AppointmentUpdateRequest(Subject="Temp Smoke Test Event (Updated)"))
     # print("Updated Event subject.")
 
     # client.delete_appointment(event_id)
