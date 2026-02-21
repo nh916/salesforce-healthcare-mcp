@@ -4,6 +4,7 @@ A client to interact with Salesforce API
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any, Self
 
 import httpx
@@ -117,6 +118,10 @@ class SalesforceClient:
         Raises:
             SalesforceAPIError: For non-success responses (after retry behavior).
         """
+
+        path = path.lstrip(
+            "/"
+        )  # remove the leading slash from the path to not have "//sobjects/Contact/{contact_id}"
 
         url: str = f"{self._api_base_url}/{path}"
 
@@ -375,30 +380,30 @@ def main() -> None:
     # ----------------------------
     # 1) List contacts
     # ----------------------------
-    contacts = client.list_contacts(limit=5)
-    print(_json.dumps(contacts, indent=2))
+    # contacts = client.list_contacts(limit=5)
+    # print(_json.dumps(contacts, indent=2))
 
     # ----------------------------
     # 2) Create -> Get -> Update -> Delete contact
     # ----------------------------
-    # contact_id = client.create_contact(
-    #     {
-    #         "FirstName": "Temp",
-    #         "LastName": "SmokeTest",
-    #         "Email": f"temp.smoketest+{int(datetime.now().timestamp())}@example.com",
-    #         "Phone": "555-555-5555",
-    #     }
-    # )
-    # print("Created Contact:", contact_id)
-    #
-    # contact = client.get_contact(contact_id)
-    # print("Fetched Contact:", _json.dumps(contact, indent=2))
-    #
-    # client.update_contact(contact_id, {"Phone": "555-000-0000"})
-    # print("Updated Contact phone.")
-    #
-    # client.delete_contact(contact_id)
-    # print("Deleted Contact.")
+    contact_id = client.create_contact(
+        {
+            "FirstName": f"John+{int(datetime.now().timestamp())}",
+            "LastName": f"Doe+{int(datetime.now().timestamp())}",
+            "Email": f"john.doe+{int(datetime.now().timestamp())}@example.com",
+            "Phone": "555-555-5555",
+        }
+    )
+    print("Created Contact:", contact_id)
+
+    contact = client.get_contact(contact_id)
+    print("Fetched Contact:", _json.dumps(contact, indent=2))
+
+    client.update_contact(contact_id, {"Phone": "555-000-0000"})
+    print("Updated Contact phone.")
+
+    client.delete_contact(contact_id)
+    print("Deleted Contact.")
 
     # ----------------------------
     # 3) SOQL query (customize)
