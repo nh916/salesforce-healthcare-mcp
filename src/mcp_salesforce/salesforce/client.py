@@ -129,7 +129,7 @@ class SalesforceClient:
 
         url: str = f"{self._api_base_url}/{path}"
 
-        if self._access_token is None:
+        if not self._access_token:
             token = self._refresh_access_token()
         else:
             token = self._access_token
@@ -153,7 +153,7 @@ class SalesforceClient:
             and response.status_code == 401
             and "INVALID_SESSION_ID" in response.text
         ):
-            self._refresh_access_token()
+            token = self._refresh_access_token()
             headers = {
                 "Authorization": f"Bearer {token}",
                 "Accept": "application/json",
@@ -374,7 +374,7 @@ def main() -> None:
     Toggle sections by commenting/uncommenting the blocks below.
     """
 
-    SalesforceClient()
+    # client = SalesforceClient()
 
     # ----------------------------
     # 0) Token refresh only
@@ -391,21 +391,25 @@ def main() -> None:
     # ----------------------------
     # 2) Create -> Get -> Update -> Delete contact
     # ----------------------------
-    # contact_id = client.create_contact(
+    # from datetime import datetime
+
+    # contact_id: str = client.create_contact(
     #     ContactRequest(
     #         FirstName=f"John+{int(datetime.now().timestamp())}",
     #         LastName=f"Doe+{int(datetime.now().timestamp())}",
     #         Email=f"john.doe+{int(datetime.now().timestamp())}@example.com",
-    #         Phone="555-555-5556",
+    #         Phone="555-555-5557",
     #     )
     # )
     # print("Created Contact:", contact_id)
 
-    # contact_id: str = "003g5000009SB09AAG"
+    # contact_id: str = "003g5000009S7nlAAC"
+
+    # import json
 
     # get contact by id
     # contact = client.get_contact(contact_id=contact_id)
-    # print("Fetched Contact:", _json.dumps(contact, indent=2))
+    # print("Fetched Contact:", json.dumps(contact, indent=2))
 
     # client.update_contact(contact_id=contact_id, data=ContactUpdateRequest(Phone="555-000-0000"))
     # print("Updated Contact phone.")
@@ -418,18 +422,19 @@ def main() -> None:
     # ----------------------------
     # soql = "SELECT Id, Name FROM Account ORDER BY CreatedDate DESC LIMIT 5"
     # res = client.query(soql)
-    # print(_json.dumps(res, indent=2))
+    # print(json.dumps(res, indent=2))
 
     # ----------------------------
     # 4) List appointments (Events)
     # ----------------------------
     # events = client.list_appointments(limit=5)
-    # print(_json.dumps(events, indent=2))
+    # print(json.dumps(events, indent=2))
 
     # ----------------------------
     # 5) Create -> Get -> Update -> Delete appointment (Event)
     # NOTE: WhoId should be a valid Contact/Lead Id if you want it linked.
     # ----------------------------
+    # from datetime import datetime, timezone, timedelta
 
     # now = datetime.now(timezone.utc).replace(microsecond=0)
     # start = now + timedelta(minutes=10)
@@ -444,8 +449,10 @@ def main() -> None:
     # )
     # print("Created Event:", event_id)
 
+    # event_id: str = "00Ug5000000EFQbEAO"
+
     # event = client.get_appointment(event_id)
-    # print("Fetched Event:", _json.dumps(event, indent=2))
+    # print("Fetched Event:", json.dumps(event, indent=2))
 
     # client.update_appointment(event_id, AppointmentUpdateRequest(Subject="Temp Smoke Test Event (Updated)"))
     # print("Updated Event subject.")
