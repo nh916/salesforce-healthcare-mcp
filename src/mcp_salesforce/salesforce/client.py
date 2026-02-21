@@ -17,13 +17,6 @@ from mcp_salesforce.salesforce.models import (
 )
 
 
-# TODO: do I even need this?
-class SalesforceAuthError(RuntimeError):
-    """
-    Raised when Salesforce OAuth authentication fails
-    """
-
-
 class SalesforceClient:
     """
     Salesforce REST client using OAuth refresh-token flow.
@@ -66,7 +59,7 @@ class SalesforceClient:
             The new access token.
 
         Raises:
-            SalesforceAuthError: If the token refresh fails.
+            RuntimeError: If the token refresh fails.
         """
         data: dict[str, str] = {
             "grant_type": "refresh_token",
@@ -78,7 +71,7 @@ class SalesforceClient:
         response: httpx.Response = self._httpx_client.post(self._token_url, data=data)
 
         if response.status_code >= 400:
-            raise SalesforceAuthError(
+            raise RuntimeError(
                 f"Token refresh failed ({response.status_code}): {response.text}"
             )
 
