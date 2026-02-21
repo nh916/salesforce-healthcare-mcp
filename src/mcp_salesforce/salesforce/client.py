@@ -146,6 +146,7 @@ class SalesforceClient:
 
         token: str = self._access_token
 
+        # TODO: fix this from being unreachable?
         if token is None:
             raise SalesforceAuthError("Access token is missing after refresh.")
 
@@ -177,6 +178,8 @@ class SalesforceClient:
                 method=method, url=url, params=params, json=json, headers=headers
             )
 
+        response.raise_for_status()
+
         return response
 
     # ----------------------------------------------------------------------------------------------------------
@@ -192,8 +195,12 @@ class SalesforceClient:
             fields: Contact fields in Salesforce API format (e.g., FirstName, LastName, Email).
 
         Returns:
-            str: The created Contact Id.
+            str: The created Contact Id from Salesforce
+
+        Raises:
+            KeyError: in case the key is not in the dict and the JSON response comes back from the server different than expected
         """
+
         # TODO: use the HTTP Method enums that we have handy
         response: httpx.Response = self._make_request(
             method="POST", path="/sobjects/Contact", json=fields
@@ -210,18 +217,24 @@ class SalesforceClient:
             contact_id (str): contact_id within salesforce to find the contact
 
         Returns:
-
+            dict[str, Any]: returns the response JSON from Salesforce
         """
-
         response: httpx.Response = self._make_request(
             method="GET", path="/sobjects/Contact/{contact_id}"
         )
         response.raise_for_status()
-        return dict(response.json())
+        return response.json()
 
     def update_contact(self: Self, contact_id: str, fields: dict[str, Any]) -> None:
         """
         Update a Contact by Id
+
+        Args:
+            contact_id (str): the contact ID from Salesforce that we want to update
+            fields (dict[str, Any]): body to overwrite what was in Salesforce
+
+        Returns:
+            None
         """
 
         response: httpx.Response = self._make_request(
@@ -232,6 +245,12 @@ class SalesforceClient:
     def delete_contact(self: Self, contact_id: str) -> None:
         """
         Delete a Contact by Id
+
+        Args:
+            contact_id (str): the contact ID from Salesforce that we want to update
+
+        Returns:
+            None
         """
         response: httpx.Response = self._make_request(
             method="DELETE", path="/sobjects/Contact/{contact_id}"
@@ -239,7 +258,9 @@ class SalesforceClient:
         response.raise_for_status()
 
     def query(self: Self, soql: str) -> dict[str, Any]:
-        """Run a SOQL query via /query.
+        """
+        Run a SOQL query via /query.
+        Helper method for the methods that need to list the contents of a table
 
         Args:
             soql: A SOQL query string.
@@ -254,31 +275,52 @@ class SalesforceClient:
         return dict(response.json())
 
     def list_contacts(self: Self, limit: int = 10) -> dict[str, Any]:
-        """List recent Contacts (simple convenience wrapper)."""
-        soql = (
+        """
+        List recent Contacts (simple convenience wrapper)
+
+        Returns:
+            dict[str, Any]: the response from Salesforce
+        """
+
+        soql: str = (
             "SELECT Id, FirstName, LastName, Phone, Email "
             "FROM Contact ORDER BY CreatedDate DESC "
             f"LIMIT {int(limit)}"
         )
         return self.query(soql)
 
-    # -------------------------
+    # ---------------------------------------------------------------------------------
     # Appointments (sObject: Event)
-    # -------------------------
+    # ---------------------------------------------------------------------------------
 
     def create_appointment(self: Self, fields: dict[str, Any]) -> str:
         """
         Create an appointment (Event)
+
+        Args:
+            fields (dict[str, Any]): the body that we want to write to the `Events` table
+
+        Returns:
+            The created appointment ID
         """
         response: httpx.Response = self._make_request(
             method="POST", path="/sobjects/Event", json=fields
         )
         response.raise_for_status()
-        return str(response.json()["id"])
+        return response.json()["id"]
 
     def get_appointment(self: Self, event_id: str) -> dict[str, Any]:
         """
         Fetch an appointment (Event) by Id
+
+        Notes:
+            We are using the built in table of `Events` from Salesforce
+
+        Args:
+            event_id (str): the ID of the appointment that we want
+
+        Returns:
+            dict[str, Any]: the response from Salesforce
         """
         response: httpx.Response = self._make_request(
             method="GET", path=f"/sobjects/Event/{event_id}"
@@ -289,7 +331,15 @@ class SalesforceClient:
     def update_appointment(self: Self, event_id: str, fields: dict[str, Any]) -> None:
         """
         Update an appointment (Event) by Id
+
+        Args:
+            event_id (str): the ID of the appointment that we want to update
+            fields (dict[str, Any]): the body that we want to write to the `Events` table
+
+        Returns:
+            None
         """
+
         response: httpx.Response = self._make_request(
             method="PATCH", path=f"/sobjects/Event/{event_id}", json=fields
         )
@@ -298,7 +348,14 @@ class SalesforceClient:
     def delete_appointment(self: Self, event_id: str) -> None:
         """
         Delete an appointment (Event) by Id
+
+        Args:
+            event_id (str): the ID of the appointment that we want to delete
+
+        Returns:
+            None
         """
+
         response: httpx.Response = self._make_request(
             method="DELETE", path=f"/sobjects/Event/{event_id}"
         )
@@ -307,10 +364,18 @@ class SalesforceClient:
     def list_appointments(self: Self, limit: int = 10) -> dict[str, Any]:
         """
         List recent appointments (Events)
+
+        Args:
+            limit (int): the number of appointments that we want to return
+
+        Returns:
+            dict[str, Any]: the response from Salesforce
         """
+
         soql: str = (
             "SELECT Id, Subject, StartDateTime, EndDateTime, WhoId "
             "FROM Event ORDER BY StartDateTime DESC "
             f"LIMIT {int(limit)}"
         )
+
         return self.query(soql)
