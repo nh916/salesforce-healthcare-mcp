@@ -4,7 +4,6 @@ A client to interact with Salesforce API
 
 from __future__ import annotations
 
-from datetime import datetime
 from typing import Any, Self
 
 import httpx
@@ -89,6 +88,9 @@ class SalesforceClient:
 
         if instance_url is not None:
             self._instance_url = str(instance_url).rstrip("/")
+
+        # ALWAYS recompute after possible change
+        self._api_base_url = f"{self._instance_url}/services/data/{self._api_version}"
 
         self._access_token = token
 
@@ -185,7 +187,9 @@ class SalesforceClient:
         response: httpx.Response = self._make_request(
             method="POST", path="/sobjects/Contact", json=fields
         )
+
         response.raise_for_status()
+
         return str(response.json()["id"])
 
     # TODO: return a pydantic model instead
@@ -200,8 +204,9 @@ class SalesforceClient:
             dict[str, Any]: returns the response JSON from Salesforce
         """
         response: httpx.Response = self._make_request(
-            method="GET", path="/sobjects/Contact/{contact_id}"
+            method="GET", path=f"/sobjects/Contact/{contact_id}"
         )
+
         response.raise_for_status()
         return response.json()
 
@@ -386,24 +391,24 @@ def main() -> None:
     # ----------------------------
     # 2) Create -> Get -> Update -> Delete contact
     # ----------------------------
-    contact_id = client.create_contact(
-        {
-            "FirstName": f"John+{int(datetime.now().timestamp())}",
-            "LastName": f"Doe+{int(datetime.now().timestamp())}",
-            "Email": f"john.doe+{int(datetime.now().timestamp())}@example.com",
-            "Phone": "555-555-5555",
-        }
-    )
-    print("Created Contact:", contact_id)
+    # contact_id = client.create_contact(
+    #     {
+    #         "FirstName": f"John+{int(datetime.now().timestamp())}",
+    #         "LastName": f"Doe+{int(datetime.now().timestamp())}",
+    #         "Email": f"john.doe+{int(datetime.now().timestamp())}@example.com",
+    #         "Phone": "555-555-5556",
+    #     }
+    # )
+    # print("Created Contact:", contact_id)
 
-    contact = client.get_contact(contact_id)
+    contact = client.get_contact(contact_id="003g5000009SB09AAG")
     print("Fetched Contact:", _json.dumps(contact, indent=2))
 
-    client.update_contact(contact_id, {"Phone": "555-000-0000"})
-    print("Updated Contact phone.")
+    # client.update_contact(contact_id, {"Phone": "555-000-0000"})
+    # print("Updated Contact phone.")
 
-    client.delete_contact(contact_id)
-    print("Deleted Contact.")
+    # client.delete_contact(contact_id)
+    # print("Deleted Contact.")
 
     # ----------------------------
     # 3) SOQL query (customize)
