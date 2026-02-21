@@ -138,6 +138,7 @@ class SalesforceClient:
         Raises:
             SalesforceAPIError: For non-success responses (after retry behavior).
         """
+
         url: str = f"{self._api_base_url}/{path}"
 
         if self._access_token is None:
@@ -178,9 +179,9 @@ class SalesforceClient:
 
         return response
 
-    # -------------------------
+    # ----------------------------------------------------------------------------------------------------------
     # Contacts (sObject: Contact)
-    # -------------------------
+    # ----------------------------------------------------------------------------------------------------------
 
     # TODO: the fields need to be a pydantic model instead
     def create_contact(self: Self, fields: dict[str, Any]) -> str:
