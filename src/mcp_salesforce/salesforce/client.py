@@ -379,3 +379,92 @@ class SalesforceClient:
         )
 
         return self.query(soql)
+
+
+def main() -> None:
+    """
+    Temporary smoke-test runner for SalesforceClient.
+
+    Toggle sections by commenting/uncommenting the blocks below.
+    """
+    import json as _json
+
+    client = SalesforceClient()
+
+    # ----------------------------
+    # 0) Token refresh only
+    # ----------------------------
+    # token = client._refresh_access_token()  # noqa: SLF001 (temporary)
+    # print("Access token minted (redacted):", token[:10] + "…")
+
+    # ----------------------------
+    # 1) List contacts
+    # ----------------------------
+    contacts = client.list_contacts(limit=5)
+    print(_json.dumps(contacts, indent=2))
+
+    # ----------------------------
+    # 2) Create -> Get -> Update -> Delete contact
+    # ----------------------------
+    # contact_id = client.create_contact(
+    #     {
+    #         "FirstName": "Temp",
+    #         "LastName": "SmokeTest",
+    #         "Email": f"temp.smoketest+{int(datetime.now().timestamp())}@example.com",
+    #         "Phone": "555-555-5555",
+    #     }
+    # )
+    # print("Created Contact:", contact_id)
+    #
+    # contact = client.get_contact(contact_id)
+    # print("Fetched Contact:", _json.dumps(contact, indent=2))
+    #
+    # client.update_contact(contact_id, {"Phone": "555-000-0000"})
+    # print("Updated Contact phone.")
+    #
+    # client.delete_contact(contact_id)
+    # print("Deleted Contact.")
+
+    # ----------------------------
+    # 3) SOQL query (customize)
+    # ----------------------------
+    # soql = "SELECT Id, Name FROM Account ORDER BY CreatedDate DESC LIMIT 5"
+    # res = client.query(soql)
+    # print(_json.dumps(res, indent=2))
+
+    # ----------------------------
+    # 4) List appointments (Events)
+    # ----------------------------
+    # events = client.list_appointments(limit=5)
+    # print(_json.dumps(events, indent=2))
+
+    # ----------------------------
+    # 5) Create -> Get -> Update -> Delete appointment (Event)
+    # NOTE: WhoId should be a valid Contact/Lead Id if you want it linked.
+    # ----------------------------
+    # now = datetime.now(timezone.utc).replace(microsecond=0)
+    # start = now + timedelta(minutes=10)
+    # end = start + timedelta(minutes=30)
+    #
+    # event_id = client.create_appointment(
+    #     {
+    #         "Subject": "Temp Smoke Test Event",
+    #         "StartDateTime": start.isoformat().replace("+00:00", "Z"),
+    #         "EndDateTime": end.isoformat().replace("+00:00", "Z"),
+    #         # "WhoId": "<CONTACT_OR_LEAD_ID>",
+    #     }
+    # )
+    # print("Created Event:", event_id)
+    #
+    # event = client.get_appointment(event_id)
+    # print("Fetched Event:", _json.dumps(event, indent=2))
+    #
+    # client.update_appointment(event_id, {"Subject": "Temp Smoke Test Event (Updated)"})
+    # print("Updated Event subject.")
+    #
+    # client.delete_appointment(event_id)
+    # print("Deleted Event.")
+
+
+if __name__ == "__main__":
+    main()
