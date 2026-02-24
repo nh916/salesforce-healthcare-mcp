@@ -55,6 +55,12 @@ flowchart TD
 
 ---
 
+## ⚠️ MCP Execution Note
+
+End-to-end tool invocation via Claude requires a Pro subscription. While this MCP server registers and connects successfully, tool execution through Claude could not be fully exercised without Pro access. Salesforce authentication and all CRUD operations were independently verified against the Salesforce REST API.
+
+---
+
 ## Setup
 
 ### 1. Install dependencies
@@ -124,16 +130,6 @@ Example prompt:
 * Stateless beyond in-memory access token
 
 No manual re-authentication required once refresh token is configured.
-
----
-
-## Design Decisions
-
-* Single shared `SalesforceClient`
-* Central `_make_request` method to avoid duplication
-* Retry-once logic for expired sessions
-* Pydantic validation at tool boundary
-* Strict Python 3.11 typing (`dict`, `| None`, etc.)
 
 ---
 
