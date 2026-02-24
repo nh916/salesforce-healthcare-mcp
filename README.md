@@ -163,6 +163,12 @@ Create Appointment:
 
 ---
 
+## Design & Trade-offs
+
+See [DESIGN_DECISIONS.md](./DESIGN_DECISIONS.md) for architectural reasoning and trade-offs.
+
+---
+
 ## Future Improvements
 
 * Return typed response models instead of raw dicts
