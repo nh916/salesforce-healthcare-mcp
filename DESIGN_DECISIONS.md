@@ -6,180 +6,211 @@ This document explains the architectural decisions made in this project and the 
 
 ## 1. OAuth Approach: Refresh Token vs Full Authorization Flow
 
-### Decision
-
+### Decision  
 Use a long-lived `refresh_token` stored in environment variables and mint short-lived access tokens programmatically.
 
 ### Why
-
-* Faster to implement
-* No interactive browser flow required
-* Deterministic and reliable for backend integrations
-* Appropriate for server-to-server architecture
+- Appropriate for backend/server-to-server architecture  
+- No interactive browser flow required  
+- Deterministic and reliable  
+- Minimal implementation complexity  
 
 ### Trade-off
-
-* Requires manual initial OAuth setup
-* Less flexible than implementing full Authorization Code + PKCE flow
-* Assumes a pre-generated refresh token
-
-### Alternative (More Complete) Approach
-
-Implement the full OAuth authorization flow within the application:
-
-* Authorization Code grant
-* Redirect URI handling
-* Token exchange endpoint
-* Automatic refresh storage
-
-That approach is more production-ready for distributed apps or SaaS products but adds significant complexity that is unnecessary for a scoped integration project.
+- Requires manual initial OAuth setup  
+- Less flexible than full Authorization Code + PKCE flow  
+- Assumes pre-generated refresh token  
 
 ### Rationale
-
-For this project, the refresh-token approach provides secure, clean authentication without overengineering.
+For a scoped backend integration, the refresh-token approach provides secure authentication without unnecessary complexity. A full OAuth flow would be appropriate for a distributed SaaS application but is intentionally avoided here to prevent overengineering.
 
 ---
 
 ## 2. Dedicated `SalesforceClient` Abstraction
 
-### Decision
-
-Encapsulate all Salesforce API logic in a `SalesforceClient`.
+### Decision  
+Encapsulate all Salesforce API logic in a dedicated client.
 
 ### Why
-
-* Centralizes authentication
-* Prevents duplicated HTTP logic
-* Enables retry-once logic for expired sessions
-* Improves testability and modularity
+- Centralizes authentication
+- Eliminates duplicated HTTP logic
+- Implements retry-once logic consistently
+- Improves testability and modularity
 
 ### Trade-off
+- Adds a thin abstraction layer
 
-* Indirection layer vs direct requests
-
-This is the correct long-term architectural choice for maintainability.
+This structure supports long-term maintainability and production evolution.
 
 ---
 
 ## 3. Retry-once Token Strategy
 
-Salesforce does not reliably provide expiration metadata for refresh-token flows.
+Salesforce does not reliably expose expiration metadata for refresh-token flows.
 
-### Decision
-
-Refresh token only when `INVALID_SESSION_ID` is returned.
+### Decision  
+Refresh only when `INVALID_SESSION_ID` is returned.
 
 ### Why
-
-* Deterministic
-* Avoids speculative expiration logic
-* Keeps implementation simple
+- Deterministic behavior  
+- Avoids speculative expiration logic  
+- Simpler and more robust  
 
 ### Trade-off
-
-* First expired request may fail once before retry
+- The first expired request may fail once before retry
 
 ---
 
 ## 4. Functional MCP Tools vs Class-based Tool Objects
 
-### Decision
-
+### Decision  
 Register plain functions as MCP tools.
 
 ### Why
-
-* Clear and explicit tool boundaries
-* Simpler introspection for MCP
-* Stateless wrappers around a shared client
+- Clear tool boundaries  
+- Stateless wrappers over shared client  
+- Cleaner introspection for MCP  
 
 ### Trade-off
+- Flat structure can grow large as tool count increases  
+- Less natural grouping of related operations  
+- Harder to attach shared behavior via inheritance  
 
-* Tools live in a flat structure
-* Less object grouping than class-based registration
+### Alternative  
+Define tool classes (e.g., `ContactTools`, `AppointmentTools`) and register methods.
 
-This keeps the tool layer clean and predictable.
+This would:
+- Improve logical grouping
+- Support shared validation or pre-processing
+- Scale better if tool surface grows significantly
+
+### Rationale  
+For the current scope, function-based tools keep the interface simple and transparent. If the tool surface expands substantially, migrating to grouped tool classes would be appropriate.
 
 ---
 
-## 5. Using Salesforce as the Source of Truth
+## 5. Minimal Salesforce Configuration
 
-### Decision
-
-Operate directly on Salesforce `Contact` and `Event` sObjects.
+All business logic resides in the Python codebase.
 
 ### Why
-
-* Avoids data duplication
-* No sync layer needed
-* Leverages Salesforce schema and validation
-
-### Trade-off
-
-* Tightly coupled to Salesforce
-* No local caching or offline mode
-
-For an integration project, Salesforce should remain authoritative.
-
----
-
-## 6. Minimal Salesforce Configuration
-
-All business logic exists in the Python codebase.
-
-### Why
-
-* No custom Apex required
-* No custom Salesforce metadata configuration
-* Highly portable integration
-* Easy to deploy to another org with only credentials
+- No custom Apex  
+- No custom Salesforce metadata  
+- Easily portable across orgs  
+- Deployment requires only credentials  
 
 ### Trade-off
-
-* Less deep customization of Salesforce features
-* Operates within standard REST capabilities
+- Limited to standard REST API capabilities  
 
 This keeps the integration modular and transferable.
 
 ---
 
-## 7. Synchronous HTTP Client
+## 6. Synchronous HTTP Client
 
-### Decision
-
+### Decision  
 Use synchronous `httpx.Client`.
 
 ### Why
-
-* MCP server operates over stdio
-* No concurrency requirement
-* Simpler control flow
+- MCP server runs over stdio  
+- No concurrency requirements  
+- Simpler control flow  
 
 Async was intentionally avoided to reduce unnecessary complexity.
 
 ---
 
-## 8. Boundary Validation with Pydantic
+## 7. Boundary Validation with Pydantic
 
-### Decision
-
+### Decision  
 Validate all request bodies before sending to Salesforce.
 
 ### Why
+- Prevent malformed API calls  
+- Clear schema contracts  
+- Strongly typed integration boundary  
 
-* Prevent malformed API calls
-* Strong typing
-* Clear schema documentation
+This ensures invalid data fails early and predictably.
+
+---
+
+## 8. Strong Typing, Static Analysis & Code Quality
+
+### Strong Typing
+
+The project uses full Python 3.11 type hints and Pydantic models.
+
+**Benefits:**
+- Clear data contracts  
+- Reduced runtime surprises  
+- Safer refactoring  
+- Improved IDE support  
+- Predictable, traceable errors
+
+All errors that surface are standard Python errors, making them easy to recognize and debug.
+
+---
+
+### Static Type Checking (MyPy)
+
+MyPy is enforced in CI to detect:
+- Missing parameters  
+- Incorrect return types  
+- Type mismatches  
+- Improper optional handling
+- It checks for any error that could have been missed or not caught during development
+
+This catches entire classes of issues before runtime.
+
+---
+
+### Deterministic Formatting & Linting
+
+The project enforces:
+- `black`
+- `isort`
+- CI linting workflows  
+
+Clean, consistent formatting:
+- Reduces cognitive load  
+- Makes diffs smaller  
+- Improves readability  
+- Simplifies debugging  
+
+Readable code is easier to understand and safer to maintain.
+
+---
+
+### Clear Documentation
+
+Core components include structured Google-style docstrings describing:
+- Intent
+- Inputs
+- Outputs
+- Failure behavior  
+
+This improves maintainability and onboarding and makes the system easier for both humans and AI tooling to understand.
+
+---
+
+### Dependency Management with Poetry
+
+Poetry is used for:
+- Deterministic dependency resolution  
+- Lockfile management  
+- Environment isolation  
+- Structured dependency grouping  
+
+This prevents dependency drift and improves reproducibility.
 
 ---
 
 # Design Philosophy
 
-The architecture favors:
+The architecture prioritizes:
 
-* Clarity over cleverness
-* Determinism over speculation
-* Modularity over shortcuts
-* Correctness over premature optimization
+- Clarity over cleverness  
+- Determinism over speculation  
+- Explicit contracts over implicit behavior  
+- Maintainability over shortcuts  
 
-The result is a clean, extensible integration layer suitable for production evolution without unnecessary complexity for the current scope.
+The result is a modular, strongly typed, readable, production-extendable integration layer that avoids unnecessary complexity while remaining robust.
